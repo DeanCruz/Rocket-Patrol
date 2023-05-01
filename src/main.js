@@ -6,6 +6,10 @@
 // Mod 4: 30 second speed up (5 points) - 20 mins
 // Mod 5: 'FIRE' UI (5 points) - 10 mins
 // Mod 6: Background Music (5 points) - 10 mins
+// Mod 7: Persistent high score (5 points) - 15 mins
+const gameData = {
+    highScore: 0
+};
 let config = {
     type: Phaser.CANVAS,
     width: 640,
