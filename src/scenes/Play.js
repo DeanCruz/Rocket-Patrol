@@ -10,6 +10,9 @@ class Play extends Phaser.Scene {
 
         // Add music
         this.music = null;
+
+        // Default player
+        this.activePlayer = 'P1';
     }
 
     // initialize game settings
@@ -41,6 +44,8 @@ class Play extends Phaser.Scene {
         this.add.rectangle(0, borderUISize + borderPadding, game.config.width, borderUISize * 2, 0x00FF00).setOrigin(0, 0);
         // add rocket (p1)
         this.p1Rocket = new Rocket(this, game.config.width/2, game.config.height - borderUISize - borderPadding, 'rocket').setOrigin(0.5, 0);
+        // add rocket (p2)
+        this.p2Rocket = new Rocket(this, game.config.width/2, game.config.height - borderUISize - borderPadding, 'rocket').setOrigin(0.5, 0);
         // add spaceships (x3)
         this.ship01 = new Spaceship(this, game.config.width + borderUISize*6, borderUISize*4, 'spaceship', 0, 30).setOrigin(0, 0);
         this.ship02 = new Spaceship(this, game.config.width + borderUISize*3, borderUISize*5 + borderPadding*2, 'spaceship', 0, 20).setOrigin(0,0);
@@ -53,6 +58,21 @@ class Play extends Phaser.Scene {
         this.add.rectangle(0, 0, borderUISize, game.config.height, 0xFFFFFF).setOrigin(0,0);
         this.add.rectangle(game.config.width - borderUISize, 0, borderUISize, game.config.height, 0xFFFFFF).setOrigin(0,0);
 
+        this.startingPlayer1Position = { x: this.p1Rocket.x, y: this.p1Rocket.y };
+        this.startingPlayer2Position = { x: this.p2Rocket.x, y: this.p2Rocket.y };
+
+        // end screen text
+        this.endScreenText = [];
+
+        // add space key input event
+        if (this.gameOver)
+        {
+            this.input.keyboard.on('keydown-SPACE', () => {
+                this.hideEndScreen();
+                this.resetGame();
+            });
+        }
+        
         // timer
         this.remainingTime = this.settings.gameTimer / 1000;
         let timerConfig = {
@@ -98,6 +118,8 @@ class Play extends Phaser.Scene {
         keyR = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
         keyLEFT = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT);
         keyRIGHT = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT);
+        // add key for player 2 start
+        keySPACE = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
         // add mouse controls
         this.input.on('pointermove', this.handlePointerMove, this);
@@ -132,7 +154,7 @@ class Play extends Phaser.Scene {
         }
         this.scoreLeft = this.add.text(borderUISize + borderPadding, borderUISize + borderPadding*2, this.p1Score, scoreConfig);
 
-        // Display high score
+        // display high score
         this.highScoreText = this.add.text(borderUISize + borderPadding * 12, borderUISize + borderPadding * 2, `High Score: ${gameData.highScore}`, {
 
             fontFamily: 'Courier',
@@ -145,7 +167,7 @@ class Play extends Phaser.Scene {
             },
         });
 
-        // add FIRE text
+        // add 'FIRE' text
         this.fireText = this.add.text(game.config.width/2, borderUISize + borderPadding * 2, 'FIRE', {
             fontFamily: 'Courier',
             fontSize: '22px',
@@ -157,7 +179,33 @@ class Play extends Phaser.Scene {
             },
         }).setOrigin(-1, 0);
 
-        // GAME OVER flag
+        // add active player indicator (p1)
+        if (this.activePlayer == 'P1'){
+            this.playerIndicator = this.add.text(borderUISize + borderPadding, game.config.height - borderUISize - borderPadding, 'P1', {
+                fontFamily: 'Courier',
+                fontSize: '18px',
+                color: '#FFFFFF',
+                backgroundColor: '#FF0000',
+                padding: {
+                    top: 2,
+                    bottom: 2,
+                },
+            }).setOrigin(0, 1);
+        }
+        // add active player indicator (p2)
+        if (this.activePlayer == 'P2'){
+            this.playerIndicator = this.add.text(borderUISize + borderPadding, game.config.height - borderUISize - borderPadding, 'P2', {
+                fontFamily: 'Courier',
+                fontSize: '18px',
+                color: '#FFFFFF',
+                backgroundColor: '#0066FF',
+                padding: {
+                    top: 2,
+                    bottom: 2,
+                },
+            }).setOrigin(0, 1);
+        }
+        // game over flag
         this.gameOver = false;
         // 30 second speed increase flag
         this.speedIncrease = false;
@@ -168,44 +216,86 @@ class Play extends Phaser.Scene {
         if(this.gameOver && Phaser.Input.Keyboard.JustDown(keyR)) {
             this.scene.restart();
         }
-
         if(this.gameOver && Phaser.Input.Keyboard.JustDown(keyLEFT)) {
             this.scene.start("menuScene");
+        }
+
+        // check for space key input to alternate players
+        if (this.gameOver && Phaser.Input.Keyboard.JustDown(keySPACE)) {
+            this.toggleActivePlayer(); // switch from p1 to p2
+            this.gameOver = false;
+            this.remainingTime = this.settings.gameTimer / 1000;
+            this.timeText.setText('Time: ' + this.remainingTime);
+            this.p1Rocket.reset();
+        } 
+        // if p2 and space is not pressed, switch back to p1
+        else if (this.gameOver && this.activePlayer == 'P2'){
+            this.toggleActivePlayer(); // switch from p2 to p1
+            this.gameOver = false;
+            this.remainingTime = this.settings.gameTimer / 1000;
+            this.timeText.setText('Time: ' + this.remainingTime);
+            this.p2Rocket.reset();
         }
 
         // update tile sprite
         this.starfield.tilePositionX -= 4;  
 
+        // make active rocket visible
+        if(this.activePlayer == 'P1') {
+            this.p1Rocket.visible = true;
+            this.p2Rocket.visible = false;
+        }
+        else {
+            this.p1Rocket.visible = false;
+            this.p2Rocket.visible = true;
+        }
+
+        // update the correct rocket
         if(!this.gameOver) {
-            this.p1Rocket.update();             
+            if (this.activePlayer === 'P1') {
+                this.p1Rocket.update();
+            } else {
+                this.p2Rocket.update();
+            }            
             this.ship01.update();              
             this.ship02.update();
             this.ship03.update();
             this.smolShip.update();
         }
 
-        console.log(this.p1Rocket.isFiring)
+        // 'FIRE' text
         if (this.p1Rocket.isFiring) {
             this.fireText.visible = true;
-          } else {
+        } 
+        else {
             this.fireText.visible = false;
-          }
+        }
 
         // check collisions
-        if(this.checkCollision(this.p1Rocket, this.ship03)) {
-            this.p1Rocket.reset();
+        if (this.activePlayer === 'P1') {
+            this.checkAndHandleCollisions(this.p1Rocket);
+        } 
+        else {
+            this.checkAndHandleCollisions(this.p2Rocket);
+        }
+    }
+
+    // allow collision handling for both rockets
+    checkAndHandleCollisions(rocket) {
+        if (this.checkCollision(rocket, this.ship03)) {
+            rocket.reset();
             this.shipExplode(this.ship03);
         }
-        if (this.checkCollision(this.p1Rocket, this.ship02)) {
-            this.p1Rocket.reset();
+        if (this.checkCollision(rocket, this.ship02)) {
+            rocket.reset();
             this.shipExplode(this.ship02);
         }
-        if (this.checkCollision(this.p1Rocket, this.ship01)) {
-            this.p1Rocket.reset();
+        if (this.checkCollision(rocket, this.ship01)) {
+            rocket.reset();
             this.shipExplode(this.ship01);
         }
-        if (this.checkCollision(this.p1Rocket, this.smolShip)) {
-            this.p1Rocket.reset();
+        if (this.checkCollision(rocket, this.smolShip)) {
+            rocket.reset();
             this.shipExplode(this.smolShip);
         }
     }
@@ -225,9 +315,29 @@ class Play extends Phaser.Scene {
             fixedWidth: 0
         };
         this.speedTimer = 0;
-        this.add.text(game.config.width / 2, game.config.height / 2, 'GAME OVER', scoreConfig).setOrigin(0.5);
-        this.add.text(game.config.width / 2, game.config.height / 2 + 64, 'Press (R) to Restart or ← to Menu', scoreConfig).setOrigin(0.5);
+        // end screen text
+        this.gameOverText = this.add.text(game.config.width / 2, game.config.height / 2 - 64, 'GAME OVER', scoreConfig).setOrigin(0.5);
+        this.restartText = this.add.text(game.config.width / 2, game.config.height / 2, 'Press (R) to Restart or ← to Menu', scoreConfig).setOrigin(0.5);
+        // space to start end screen
+        this.spaceToStartText = this.add.text(game.config.width / 2, game.config.height / 2 + 64, 'Press SPACE to Start Next Player', scoreConfig).setOrigin(0.5);
+
+        // flag game over condition
         this.gameOver = true;
+    
+        // store end screen text objects in the array
+        this.endScreenText.push(this.gameOverText);
+        this.endScreenText.push(this.restartText);
+        this.endScreenText.push(this.spaceToStartText);
+
+        // add space key input event to hide end screen text
+        this.input.keyboard.on('keydown-SPACE', () => {
+            this.resetGame();
+            this.endScreenText.forEach(text => {
+                if (text) {
+                    text.visible = false;
+                }
+            });
+        });
     }
 
     checkCollision(rocket, ship) {
@@ -253,7 +363,7 @@ class Play extends Phaser.Scene {
         this.p1Score += ship.points;
         this.scoreLeft.text = this.p1Score; 
 
-        // Update high score if necessary
+        // update high score if necessary
         if (this.p1Score > gameData.highScore) {
             gameData.highScore = this.p1Score;
         }
@@ -280,5 +390,49 @@ class Play extends Phaser.Scene {
             this.p1Rocket.isFiring = true;
             this.p1Rocket.sfxRocket.play();
         }
+    }
+
+    toggleActivePlayer() {
+        // switch active player
+        this.activePlayer = this.activePlayer === 'P1' ? 'P2' : 'P1';
+        this.playerIndicator.setText(this.activePlayer);
+        // update the indicator color based on the active player
+        if (this.activePlayer === 'P1') {
+            this.playerIndicator.setStyle({
+                color: '#FFFFFF',
+                backgroundColor: '#FF0000'
+            });
+        } else {
+            this.playerIndicator.setStyle({
+                color: '#FFFFFF',
+                backgroundColor: '#0066FF'
+            });
+        }
+    }
+
+    resetGame() {
+        // reset player positions
+        this.p1Rocket.setPosition(this.startingPlayer1Position.x, this.startingPlayer1Position.y);
+        this.p2Rocket.setPosition(this.startingPlayer2Position.x, this.startingPlayer2Position.y);
+    
+        // reset game timer
+        this.remainingTime = this.settings.gameTimer / 1000;
+        this.timeText.setText('Time: ' + this.remainingTime);
+
+        // reset score
+        this.p1Score = 0;
+        this.scoreLeft.text = this.p1Score;
+
+        // reset rockets and spaceships
+        this.p1Rocket.reset();
+        this.p2Rocket.reset();
+        this.ship01.reset();
+        this.ship02.reset();
+        this.ship03.reset();
+        this.smolShip.reset();
+    }
+    hideEndScreen() {
+        // hide text after restarting game
+        this.endScreenText.forEach(text => text.visible = false);
     }
 }
