@@ -6,7 +6,7 @@ class SmallShip extends Spaceship {
         this.setScale(0.025);
 
         // points value
-        this.points = 50;
+        this.points = 100;
 
         // time reward
         this.reward = 5;
