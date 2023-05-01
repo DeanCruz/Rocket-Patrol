@@ -117,6 +117,18 @@ class Play extends Phaser.Scene {
         }
         this.scoreLeft = this.add.text(borderUISize + borderPadding, borderUISize + borderPadding*2, this.p1Score, scoreConfig);
 
+        // add FIRE text
+        this.fireText = this.add.text(game.config.width/2, borderUISize + borderPadding * 2, 'FIRE', {
+            fontFamily: 'Courier',
+            fontSize: '28px',
+            color: '#000000',
+            backgroundColor: '#F3B141',
+            padding: {
+                top: 5,
+                bottom: 5,
+            },
+        }).setOrigin(0.5, 0);
+
         // GAME OVER flag
         this.gameOver = false;
         // 30 second speed increase flag
@@ -143,6 +155,13 @@ class Play extends Phaser.Scene {
             this.ship03.update();
             this.smolShip.update();
         }
+
+        console.log(this.p1Rocket.isFiring)
+        if (this.p1Rocket.isFiring) {
+            this.fireText.visible = true;
+          } else {
+            this.fireText.visible = false;
+          }
 
         // check collisions
         if(this.checkCollision(this.p1Rocket, this.ship03)) {
