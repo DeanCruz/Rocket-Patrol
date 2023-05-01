@@ -4,13 +4,13 @@ class Play extends Phaser.Scene {
 
         // Add text to display time
         this.timeText = null;
+        this.speedTimer = 0;
     }
 
     // initialize game settings
     init(settings) {
         this.settings = settings;
         this.gameTimer = settings.gameTimer;
-        console.log(this.gameTimer);
     }
 
     preload(){
@@ -59,6 +59,8 @@ class Play extends Phaser.Scene {
         this.timeText = this.add.text(game.config.width - borderUISize - borderPadding - timerConfig.fixedWidth, borderUISize + borderPadding * 2, '', timerConfig);
         this.timeText.setText('Time: ' + this.remainingTime);
         
+        // add a speed timer that counts to 30
+        let speedTimer = 0;
         // decrement time and display
         this.time.addEvent({
             delay: 1000,
@@ -69,6 +71,10 @@ class Play extends Phaser.Scene {
                 }
                 else {
                     this.remainingTime--;
+                    this.speedTimer++;
+                    if (this.speedTimer >= 30) {
+                        this.speedIncrease = true;
+                    }
                     this.timeText.setText('Time: ' + this.remainingTime);
                 }
             },
@@ -113,6 +119,8 @@ class Play extends Phaser.Scene {
 
         // GAME OVER flag
         this.gameOver = false;
+        // 30 second speed increase flag
+        this.speedIncrease = false;
     }
 
     update() {
