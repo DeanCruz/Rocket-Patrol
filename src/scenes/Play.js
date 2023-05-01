@@ -28,7 +28,7 @@ class Play extends Phaser.Scene {
         // load spritesheet
         this.load.spritesheet('explosion', './assets/explosion.png', {frameWidth: 64, frameHeight: 32, startFrame: 0, endFrame: 9});
          // load music
-         this.load.audio('backgroundMusic', ['./assets/direspaceemergency.mp3']);
+         this.load.audio('backgroundMusic', ['./assets/rocketpatrolbackground.mp3']);
     }
 
     create() {
