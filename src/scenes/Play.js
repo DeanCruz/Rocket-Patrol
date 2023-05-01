@@ -2,16 +2,16 @@ class Play extends Phaser.Scene {
     constructor() {
         super("playScene");
 
-        // Add text to display time
+        // add text to display time
         this.timeText = null;
 
-        // Add timer for speed up
+        // add timer for speed up
         this.speedTimer = 0;
 
-        // Add music
+        // add music
         this.music = null;
 
-        // Default player
+        // default player
         this.activePlayer = 'P1';
     }
 
@@ -38,10 +38,12 @@ class Play extends Phaser.Scene {
         this.music = this.sound.add('backgroundMusic');
         this.music.setVolume(0.5);
         this.music.play();
+        
         // place tile sprite
         this.starfield = this.add.tileSprite(0, 0, 640, 480, 'starfield').setOrigin(0,0);
         // green UI background
         this.add.rectangle(0, borderUISize + borderPadding, game.config.width, borderUISize * 2, 0x00FF00).setOrigin(0, 0);
+        
         // add rocket (p1)
         this.p1Rocket = new Rocket(this, game.config.width/2, game.config.height - borderUISize - borderPadding, 'rocket').setOrigin(0.5, 0);
         // add rocket (p2)
@@ -52,6 +54,7 @@ class Play extends Phaser.Scene {
         this.ship03 = new Spaceship(this, game.config.width, borderUISize*6 + borderPadding*4, 'spaceship', 0, 10).setOrigin(0,0);
         // add smallShip (bonus)
         this.smolShip = new SmallShip(this, game.config.width + borderUISize*8, this.ship01.y, 'smallShip', 0, 50).setOrigin(0, 0);
+        
         // white borders
         this.add.rectangle(0, 0, game.config.width, borderUISize, 0xFFFFFF).setOrigin(0,0);
         this.add.rectangle(0, game.config.height - borderUISize, game.config.width, borderUISize, 0xFFFFFF).setOrigin(0,0);
@@ -84,20 +87,24 @@ class Play extends Phaser.Scene {
         
         // add a speed timer that counts to 30
         let speedTimer = 0;
-        // decrement time and display
+
+        // dislay time
         this.time.addEvent({
-            delay: 1000,
-            callback: () => {
+            delay: 1000, 
+            callback: () => { // end game when time is out
                 if (this.remainingTime <= 0) {
                     this.endGame();
                     this.timeText.setText('Time: 0');
                 }
-                else {
+                else { // decrement time
                     this.remainingTime--;
+                    // increment speed timer until it reaches 30
                     this.speedTimer++;
                     if (this.speedTimer >= 30) {
+                        // activate spaceship speed increase
                         this.speedIncrease = true;
                     }
+                    // display time
                     this.timeText.setText('Time: ' + this.remainingTime);
                 }
             },
@@ -135,7 +142,6 @@ class Play extends Phaser.Scene {
 
         // initialize score
         this.p1Score = 0;
-
         // display score
         let scoreConfig = {
             fontFamily: 'Courier',
@@ -215,11 +221,11 @@ class Play extends Phaser.Scene {
         this.starfield.tilePositionX -= 4;  
 
         // make active rocket visible
-        if(this.activePlayer == 'P1') {
+        if(this.activePlayer == 'P1') { // P1 active
             this.p1Rocket.visible = true;
             this.p2Rocket.visible = false;
         }
-        else {
+        else { // P2 active
             this.p1Rocket.visible = false;
             this.p2Rocket.visible = true;
         }
@@ -231,6 +237,7 @@ class Play extends Phaser.Scene {
             } else {
                 this.p2Rocket.update();
             }            
+            //  update spaceships
             this.ship01.update();              
             this.ship02.update();
             this.ship03.update();
@@ -241,20 +248,20 @@ class Play extends Phaser.Scene {
         if (this.p1Rocket.isFiring || this.p2Rocket.isFiring) {
             this.fireText.visible = true;
         } 
-        else {
+        else { // only display while firing
             this.fireText.visible = false;
         }
 
         // check collisions
-        if (this.activePlayer === 'P1') {
+        if (this.activePlayer === 'P1') { // handle P1 collisions
             this.checkAndHandleCollisions(this.p1Rocket);
         } 
-        else {
+        else { // handle P2 collisions
             this.checkAndHandleCollisions(this.p2Rocket);
         }
     }
 
-    // allow collision handling for both rockets
+    // allow collision handling for both rockets for each spaceship
     checkAndHandleCollisions(rocket) {
         if (this.checkCollision(rocket, this.ship03)) {
             rocket.reset();
@@ -278,7 +285,6 @@ class Play extends Phaser.Scene {
         // using Phaser's Rectangle class for collision checking
         let rocketRect = new Phaser.Geom.Rectangle(rocket.x, rocket.y, rocket.width, rocket.height);
         let shipRect = new Phaser.Geom.Rectangle(ship.x, ship.y, ship.width * ship.scaleX, ship.height * ship.scaleY);
-    
         return Phaser.Geom.Rectangle.Overlaps(rocketRect, shipRect);
     }
 
@@ -293,6 +299,7 @@ class Play extends Phaser.Scene {
             ship.alpha = 1;                       // make ship visible again
             boom.destroy();                       // remove explosion sprite
         });
+
         // score add and repaint
         this.p1Score += ship.points;
         this.scoreLeft.text = this.p1Score; 
@@ -303,7 +310,6 @@ class Play extends Phaser.Scene {
         }
         this.highScoreText.text = `High Score: ${gameData.highScore}`;
 
-        
         // increase timer
         this.remainingTime += ship.reward;
         this.timeText.setText('Time: ' + this.remainingTime);
@@ -374,7 +380,7 @@ class Play extends Phaser.Scene {
         this.endScreenText.push(this.restartText);
         this.endScreenText.push(this.spaceToStartText);
 
-        // add space key input event to hide end screen text
+        // check space key input event to alternate players
         this.spaceKeydown = () => {
             if (this.gameOver == true) {
                 this.toggleActivePlayer(); // switch from p1 to p2
@@ -391,7 +397,8 @@ class Play extends Phaser.Scene {
             }
         };
         this.input.keyboard.on('keydown-SPACE', this.spaceKeydown);
-        // check key input for restart / menu
+        
+        // check key input to restart
         this.rKeydown = () => {
             if (this.gameOver) {
                 if (this.activePlayer == 'P2') {
@@ -410,6 +417,8 @@ class Play extends Phaser.Scene {
             }
         };
         this.input.keyboard.on('keydown-R', this.rKeydown);
+
+        // check key input to return to menu
         this.leftKeydown = () => {
             if (this.gameOver) { // if P2, switch back to P1
                 if (this.activePlayer == 'P2'){
@@ -463,6 +472,7 @@ class Play extends Phaser.Scene {
         // switch active player
         this.activePlayer = this.activePlayer === 'P1' ? 'P2' : 'P1';
         this.playerIndicator.setText(this.activePlayer);
+        
         // update the indicator color based on the active player
         if (this.activePlayer === 'P1') { // red P1 indicator
             this.playerIndicator.setStyle({

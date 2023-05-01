@@ -19,14 +19,17 @@ class SmallShip extends Spaceship {
         if (this.scene.speedIncrease) {
             this.increaseSpeed();
         }
+
         // move spaceship left
         this.x -= this.moveSpeed;
+
         // wrap around from left edge to right edge
         if(this.x <= 0 - this.width) {
             this.reset();
         }
     }
     
+    // bonus ship increased move speed
     increaseSpeed() {
        this.moveSpeed = 9;
     }
