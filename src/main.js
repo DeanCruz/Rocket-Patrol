@@ -1,3 +1,8 @@
+// Dean Cruz
+// Rocket Patrol: Rocket Power
+// Mod 1: Displayed Timer (10 points) - 30 mins
+// Mod 2: New timer mechanism (15 points) - 1 hour
+// Mod 3: Add new small space ship (15 points) - 1 hour
 let config = {
     type: Phaser.CANVAS,
     width: 640,
