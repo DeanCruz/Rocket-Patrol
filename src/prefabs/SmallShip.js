@@ -38,4 +38,8 @@ class SmallShip extends Spaceship {
     reset() {
         this.x = game.config.width;
     }
+
+    setMoveSpeed(newSpeed) {
+        this.moveSpeed = newSpeed;
+    }
 }

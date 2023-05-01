@@ -458,9 +458,18 @@ class Play extends Phaser.Scene {
         this.ship02.reset();
         this.ship03.reset();
         this.smolShip.reset();
+        this.resetSpaceshipSpeed();
 
         // restart loop
         this.gameOver = false;
+    }
+
+    resetSpaceshipSpeed() {
+        this.ship01.setMoveSpeed(game.settings.spaceshipSpeed);
+        this.ship02.setMoveSpeed(game.settings.spaceshipSpeed);
+        this.ship03.setMoveSpeed(game.settings.spaceshipSpeed);
+        this.smolShip.setMoveSpeed(game.settings.smolshipSpeed);
+        this.speedIncrease = false;
     }
 
     hideEndScreen() {
@@ -472,7 +481,7 @@ class Play extends Phaser.Scene {
         // switch active player
         this.activePlayer = this.activePlayer === 'P1' ? 'P2' : 'P1';
         this.playerIndicator.setText(this.activePlayer);
-        
+
         // update the indicator color based on the active player
         if (this.activePlayer === 'P1') { // red P1 indicator
             this.playerIndicator.setStyle({
