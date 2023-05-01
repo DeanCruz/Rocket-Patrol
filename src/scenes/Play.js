@@ -31,6 +31,7 @@ class Play extends Phaser.Scene {
         this.load.spritesheet('explosion', './assets/explosion.png', {frameWidth: 64, frameHeight: 32, startFrame: 0, endFrame: 9});
         // load music
         this.load.audio('backgroundMusic', ['./assets/rocketpatrolbackground.mp3']);
+
     }
 
     create() {
@@ -122,12 +123,21 @@ class Play extends Phaser.Scene {
 
         // add mouse controls
         if (this.activePlayer === 'P1') {
-            this.input.on('pointermove', this.handlePointerMove, this);
-            this.input.on('pointerdown', this.handlePointerDown, this);
+            this.input.on('pointermove', (pointer) => {
+                this.handlePointerMove(pointer);
+            });
+            this.input.on('pointerdown', (pointer) => {
+                this.handlePointerDown(pointer);
+            });
         } else { // add mouse controls for p2
-            this.input.on('pointermove', this.handlePointerMoveP2, this);
-            this.input.on('pointerdown', this.handlePointerDown, this);
+            this.input.on('pointermove', (pointer) => {
+                this.handlePointerMoveP2(pointer);
+            });
+            this.input.on('pointerdown', (pointer) => {
+                this.handlePointerDown(pointer);
+            });
         }
+        
         
         // animation config
         this.anims.create({
@@ -264,20 +274,28 @@ class Play extends Phaser.Scene {
     // allow collision handling for both rockets for each spaceship
     checkAndHandleCollisions(rocket) {
         if (this.checkCollision(rocket, this.ship03)) {
-            rocket.reset();
             this.shipExplode(this.ship03);
+            this.time.delayedCall(1000, () => { // add delay before allowing firing again
+                rocket.reset();
+            });
         }
         if (this.checkCollision(rocket, this.ship02)) {
-            rocket.reset();
             this.shipExplode(this.ship02);
+            this.time.delayedCall(1000, () => { // add delay before allowing firing again
+                rocket.reset();
+            });
         }
         if (this.checkCollision(rocket, this.ship01)) {
-            rocket.reset();
             this.shipExplode(this.ship01);
+            this.time.delayedCall(1000, () => { // add delay before allowing firing again
+                rocket.reset();
+            });
         }
         if (this.checkCollision(rocket, this.smolShip)) {
-            rocket.reset();
             this.shipExplode(this.smolShip);
+            this.time.delayedCall(1000, () => { // add delay before allowing firing again
+                rocket.reset();
+            });
         }
     }
 
@@ -299,6 +317,12 @@ class Play extends Phaser.Scene {
             ship.alpha = 1;                       // make ship visible again
             boom.destroy();                       // remove explosion sprite
         });
+
+        if (this.activePlayer === 'P1') {
+            this.p1Rocket.reset();
+        } else {
+            this.p2Rocket.reset();
+        }
 
         // score add and repaint
         this.p1Score += ship.points;
@@ -332,16 +356,15 @@ class Play extends Phaser.Scene {
     }
     
     handlePointerDown(pointer) {
-        // mouse firing for P1
-        if (this.activePlayer === 'P1') {
-            if (!this.p1Rocket.isFiring) {
+        if (!this.gameOver && !this.p1Rocket.isFiring || !this.gameOver && !this.p2Rocket.isFiring) {
+            if (pointer.x < game.config.width / 2) {
+                // P1
                 this.p1Rocket.isFiring = true;
-                this.p1Rocket.sfx.play();
-            }
-        } else { // mouse firing for P2
-            if (!this.p2Rocket.isFiring) {
+                this.sound.play('sfx_rocket');
+            } else if (!this.p2Rocket.isFiring){
+                // P2
                 this.p2Rocket.isFiring = true;
-                this.p2Rocket.sfx.play();
+                this.sound.play('sfx_rocket');
             }
         }
     }
