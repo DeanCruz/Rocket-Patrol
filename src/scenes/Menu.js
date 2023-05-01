@@ -9,6 +9,7 @@ class Menu extends Phaser.Scene {
       this.load.audio('sfx_explosion', './assets/explosion38.wav');
       this.load.audio('sfx_rocket', './assets/rocket_shot.wav');
   }
+  
   create() {
       // menu text configuration
       let menuConfig = {
@@ -44,7 +45,7 @@ class Menu extends Phaser.Scene {
           gameTimer: 40000    
         }
         this.sound.play('sfx_select');
-        this.scene.start("playScene");    
+        this.scene.start("playScene", game.settings);
       }
       if (Phaser.Input.Keyboard.JustDown(keyRIGHT)) {
         // Expert mode
@@ -53,7 +54,7 @@ class Menu extends Phaser.Scene {
           gameTimer: 25000    
         }
         this.sound.play('sfx_select');
-        this.scene.start("playScene");    
+        this.scene.start("playScene", game.settings);
       }
     }
 }

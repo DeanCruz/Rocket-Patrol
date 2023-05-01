@@ -6,6 +6,13 @@ class Play extends Phaser.Scene {
         this.timeText = null;
     }
 
+    // initialize game settings
+    init(settings) {
+        this.settings = settings;
+        this.gameTimer = settings.gameTimer;
+        console.log(this.gameTimer);
+    }
+
     preload(){
         // load images/tile sprites
         this.load.image('rocket', './assets/rocket.png');
@@ -27,7 +34,7 @@ class Play extends Phaser.Scene {
         this.add.rectangle(game.config.width - borderUISize, 0, borderUISize, game.config.height, 0xFFFFFF).setOrigin(0,0);
 
         // timer
-        this.startTime = this.time.now;
+        this.remainingTime = this.settings.gameTimer / 1000;
         let timerConfig = {
             fontFamily: 'Courier',
             fontSize: '28px',
@@ -41,7 +48,24 @@ class Play extends Phaser.Scene {
             fixedWidth: 150
         };
         this.timeText = this.add.text(game.config.width - borderUISize - borderPadding - timerConfig.fixedWidth, borderUISize + borderPadding * 2, '', timerConfig);
-        this.updateTimer();
+        this.timeText.setText('Time: ' + this.remainingTime);
+        
+        // decrement time and display
+        this.time.addEvent({
+            delay: 1000,
+            callback: () => {
+                if (this.remainingTime <= 0) {
+                    this.endGame();
+                    this.timeText.setText('Time: 0');
+                }
+                else {
+                    this.remainingTime--;
+                    this.timeText.setText('Time: ' + this.remainingTime);
+                }
+            },
+            callbackScope: this,
+            loop: true
+        });
 
         // add rocket (p1)
         this.p1Rocket = new Rocket(this, game.config.width/2, game.config.height - borderUISize - borderPadding, 'rocket').setOrigin(0.5, 0);
@@ -86,14 +110,6 @@ class Play extends Phaser.Scene {
 
         // GAME OVER flag
         this.gameOver = false;
-
-        // 60-second play clock
-        scoreConfig.fixedWidth = 0;
-        this.clock = this.time.delayedCall(game.settings.gameTimer, () => {
-            this.add.text(game.config.width/2, game.config.height/2, 'GAME OVER', scoreConfig).setOrigin(0.5);
-            this.add.text(game.config.width/2, game.config.height/2 + 64, 'Press (R) to Restart or ← to Menu', scoreConfig).setOrigin(0.5);
-            this.gameOver = true;
-        }, null, this);
     }
 
     update() {
@@ -113,7 +129,6 @@ class Play extends Phaser.Scene {
             this.ship01.update();               // update spaceship (x3)
             this.ship02.update();
             this.ship03.update();
-            this.updateTimer();
         }
 
         // check collisions
@@ -130,12 +145,24 @@ class Play extends Phaser.Scene {
             this.shipExplode(this.ship01);
         }
     }
-
-    updateTimer(){
-        let currentTime = this.time.now;
-        let elapsedTime = currentTime - this.startTime;
-        let remainingTime = Math.max(0, game.settings.gameTimer - elapsedTime);
-        this.timeText.setText('Time: ' + Math.floor(remainingTime / 1000));
+    
+    endGame() {
+        // display text
+        let scoreConfig = {
+            fontFamily: 'Courier',
+            fontSize: '28px',
+            backgroundColor: '#F3B141',
+            color: '#843605',
+            align: 'right',
+            padding: {
+                top: 5,
+                bottom: 5,
+            },
+            fixedWidth: 0
+        };
+        this.add.text(game.config.width / 2, game.config.height / 2, 'GAME OVER', scoreConfig).setOrigin(0.5);
+        this.add.text(game.config.width / 2, game.config.height / 2 + 64, 'Press (R) to Restart or ← to Menu', scoreConfig).setOrigin(0.5);
+        this.gameOver = true;
     }
 
     checkCollision(rocket, ship) {
@@ -165,6 +192,10 @@ class Play extends Phaser.Scene {
         this.p1Score += ship.points;
         this.scoreLeft.text = this.p1Score; 
         
+        // increase timer
+        this.remainingTime += 2;
+        this.timeText.setText('Time: ' + this.remainingTime);
+
         this.sound.play('sfx_explosion');
       }
 }
