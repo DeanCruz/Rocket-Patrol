@@ -10,7 +10,6 @@ class Play extends Phaser.Scene {
 
         // Add music
         this.music = null;
-
     }
 
     // initialize game settings
@@ -58,7 +57,7 @@ class Play extends Phaser.Scene {
         this.remainingTime = this.settings.gameTimer / 1000;
         let timerConfig = {
             fontFamily: 'Courier',
-            fontSize: '28px',
+            fontSize: '22px',
             backgroundColor:'#F3B141',
             color: '#843605',
             align: 'right',
@@ -117,7 +116,7 @@ class Play extends Phaser.Scene {
         // display score
         let scoreConfig = {
             fontFamily: 'Courier',
-            fontSize: '28px',
+            fontSize: '22px',
             backgroundColor: '#F3B141',
             color: '#843605',
             align: 'right',
@@ -129,17 +128,30 @@ class Play extends Phaser.Scene {
         }
         this.scoreLeft = this.add.text(borderUISize + borderPadding, borderUISize + borderPadding*2, this.p1Score, scoreConfig);
 
-        // add FIRE text
-        this.fireText = this.add.text(game.config.width/2, borderUISize + borderPadding * 2, 'FIRE', {
+        // Display high score
+        this.highScoreText = this.add.text(borderUISize + borderPadding * 12, borderUISize + borderPadding * 2, `High Score: ${gameData.highScore}`, {
+
             fontFamily: 'Courier',
-            fontSize: '28px',
+            fontSize: '22px',
             color: '#000000',
             backgroundColor: '#F3B141',
             padding: {
                 top: 5,
                 bottom: 5,
             },
-        }).setOrigin(0.5, 0);
+        });
+
+        // add FIRE text
+        this.fireText = this.add.text(game.config.width/2, borderUISize + borderPadding * 2, 'FIRE', {
+            fontFamily: 'Courier',
+            fontSize: '22px',
+            color: '#000000',
+            backgroundColor: '#F3B141',
+            padding: {
+                top: 5,
+                bottom: 5,
+            },
+        }).setOrigin(-1, 0);
 
         // GAME OVER flag
         this.gameOver = false;
@@ -208,6 +220,7 @@ class Play extends Phaser.Scene {
             },
             fixedWidth: 0
         };
+        this.speedTimer = 0;
         this.add.text(game.config.width / 2, game.config.height / 2, 'GAME OVER', scoreConfig).setOrigin(0.5);
         this.add.text(game.config.width / 2, game.config.height / 2 + 64, 'Press (R) to Restart or ← to Menu', scoreConfig).setOrigin(0.5);
         this.gameOver = true;
@@ -235,6 +248,13 @@ class Play extends Phaser.Scene {
         // score add and repaint
         this.p1Score += ship.points;
         this.scoreLeft.text = this.p1Score; 
+
+        // Update high score if necessary
+        if (this.p1Score > gameData.highScore) {
+            gameData.highScore = this.p1Score;
+        }
+        this.highScoreText.text = `High Score: ${gameData.highScore}`;
+
         
         // increase timer
         this.remainingTime += ship.reward;
