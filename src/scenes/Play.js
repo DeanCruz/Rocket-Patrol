@@ -29,8 +29,8 @@ class Play extends Phaser.Scene {
         this.load.image('smallShip', './assets/smallShip.png');
         // load spritesheet
         this.load.spritesheet('explosion', './assets/explosion.png', {frameWidth: 64, frameHeight: 32, startFrame: 0, endFrame: 9});
-         // load music
-         this.load.audio('backgroundMusic', ['./assets/rocketpatrolbackground.mp3']);
+        // load music
+        this.load.audio('backgroundMusic', ['./assets/rocketpatrolbackground.mp3']);
     }
 
     create() {
@@ -58,6 +58,7 @@ class Play extends Phaser.Scene {
         this.add.rectangle(0, 0, borderUISize, game.config.height, 0xFFFFFF).setOrigin(0,0);
         this.add.rectangle(game.config.width - borderUISize, 0, borderUISize, game.config.height, 0xFFFFFF).setOrigin(0,0);
 
+        // initialize starting positions for each player
         this.startingPlayer1Position = { x: this.p1Rocket.x, y: this.p1Rocket.y };
         this.startingPlayer2Position = { x: this.p2Rocket.x, y: this.p2Rocket.y };
 
@@ -205,6 +206,8 @@ class Play extends Phaser.Scene {
         this.gameOver = false;
         // 30 second speed increase flag
         this.speedIncrease = false;
+        // power down flag
+        this.powerDown = false;
     }
 
     update() {
@@ -305,16 +308,17 @@ class Play extends Phaser.Scene {
         this.remainingTime += ship.reward;
         this.timeText.setText('Time: ' + this.remainingTime);
 
-        this.sound.play('sfx_explosion');
+        // play randomized explosion sound
+        this.playRandomExplosion();
     }
 
     handlePointerMove(pointer) {
-        // move with mouse
+        // mouse movement for P1
         if (this.activePlayer === 'P1') {
             if (!this.p1Rocket.isFiring) {
                 this.p1Rocket.x = Phaser.Math.Clamp(pointer.x, borderUISize + borderPadding, game.config.width - borderUISize - borderPadding);
             }
-        } else {
+        } else { // mouse movement for P2
             if (!this.p2Rocket.isFiring) {
                 this.p2Rocket.x = Phaser.Math.Clamp(pointer.x, borderUISize + borderPadding, game.config.width - borderUISize - borderPadding);
             }
@@ -322,12 +326,13 @@ class Play extends Phaser.Scene {
     }
     
     handlePointerDown(pointer) {
+        // mouse firing for P1
         if (this.activePlayer === 'P1') {
             if (!this.p1Rocket.isFiring) {
                 this.p1Rocket.isFiring = true;
                 this.p1Rocket.sfx.play();
             }
-        } else {
+        } else { // mouse firing for P2
             if (!this.p2Rocket.isFiring) {
                 this.p2Rocket.isFiring = true;
                 this.p2Rocket.sfx.play();
@@ -336,6 +341,11 @@ class Play extends Phaser.Scene {
     }
 
     endGame() {
+        // add end game sfx
+        if (!this.powerDown){
+            this.sound.play('power_down');
+            this.powerDown = true;
+        }
         // display text
         let scoreConfig = {
             fontFamily: 'Courier',
@@ -368,12 +378,15 @@ class Play extends Phaser.Scene {
         this.spaceKeydown = () => {
             if (this.gameOver == true) {
                 this.toggleActivePlayer(); // switch from p1 to p2
-                this.resetGame();
-                this.endScreenText.forEach(text => {
+                this.resetGame(); 
+                this.endScreenText.forEach(text => { // remove end screen text
                     if (text) {
                         text.visible = false;
                     }
                 });
+                // remove flag for end sound
+                this.powerDown = false;
+                // remove listener
                 this.input.keyboard.removeListener('keydown-SPACE', this.spaceKeydown);
             }
         };
@@ -390,18 +403,26 @@ class Play extends Phaser.Scene {
                         text.visible = false;
                     }
                 });
+                // remove flag for end sound
+                this.powerDown = false;
+                // remove listener
                 this.input.keyboard.removeListener('keydown-R', this.rKeydown);
             }
         };
         this.input.keyboard.on('keydown-R', this.rKeydown);
         this.leftKeydown = () => {
-            if (this.gameOver) {
+            if (this.gameOver) { // if P2, switch back to P1
                 if (this.activePlayer == 'P2'){
                     this.toggleActivePlayer();
                 }
+                // stop music so it doesnt loop over itself
                 this.music.stop();
+                // return to menu
                 this.scene.start("menuScene");
                 this.resetGame();
+                // remove flag for end sound
+                this.powerDown = false;
+                // remove listener
                 this.input.keyboard.removeListener('keydown-LEFT', this.leftKeydown);
             }
         };
@@ -429,27 +450,36 @@ class Play extends Phaser.Scene {
         this.ship03.reset();
         this.smolShip.reset();
 
+        // restart loop
         this.gameOver = false;
     }
+
     hideEndScreen() {
         // hide text after restarting game
         this.endScreenText.forEach(text => text.visible = false);
     }
+
     toggleActivePlayer() {
         // switch active player
         this.activePlayer = this.activePlayer === 'P1' ? 'P2' : 'P1';
         this.playerIndicator.setText(this.activePlayer);
         // update the indicator color based on the active player
-        if (this.activePlayer === 'P1') {
+        if (this.activePlayer === 'P1') { // red P1 indicator
             this.playerIndicator.setStyle({
                 color: '#FFFFFF',
                 backgroundColor: '#FF0000'
             });
-        } else {
+        } else { // blue P2 indicator
             this.playerIndicator.setStyle({
                 color: '#FFFFFF',
                 backgroundColor: '#0066FF'
             });
         }
+    }
+
+    playRandomExplosion() {
+        // randomize explosion sounds
+        const explosionIndex = Phaser.Math.Between(1, 5);
+        this.sound.play(`sfx_explosion${explosionIndex}`);
     }
 }

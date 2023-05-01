@@ -9,6 +9,15 @@
 // Mod 7: Persistent high score (5 points) - 15 mins
 // Mod 8: Add mouse controls (15 points) - 20 mins
 // Mod 9: Add alternating players (15 points) - 2 hours
+//        2 players activated by pressing space on end screen
+//        Pressing R will reset player 1 for 1 player mode
+//        There is an indicator on the bottom left that indicates
+//        which player is currently active.
+// Mod 10: Add & randomize 4 explosion sounds (10 points) - 15 mins
+//         Added 4 additional sounds and an end game sound when the end
+//         screen is displayed
+
+// save highscore locally
 const gameData = {
     highScore: 0
 };
