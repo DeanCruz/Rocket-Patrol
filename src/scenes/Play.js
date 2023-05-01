@@ -98,6 +98,10 @@ class Play extends Phaser.Scene {
         keyR = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
         keyLEFT = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT);
         keyRIGHT = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT);
+
+        // add mouse controls
+        this.input.on('pointermove', this.handlePointerMove, this);
+        this.input.on('pointerdown', this.handlePointerDown, this);
         
         // animation config
         this.anims.create({
@@ -261,5 +265,20 @@ class Play extends Phaser.Scene {
         this.timeText.setText('Time: ' + this.remainingTime);
 
         this.sound.play('sfx_explosion');
-      }
+    }
+
+    handlePointerMove(pointer) {
+        // move with mouse
+        if (!this.p1Rocket.isFiring){
+            this.p1Rocket.x = Phaser.Math.Clamp(pointer.x, borderUISize + borderPadding, game.config.width - borderUISize - borderPadding);
+        }
+    }
+    
+    handlePointerDown(pointer) {
+        // fire rocket with mouse
+        if (!this.gameOver && !this.p1Rocket.isFiring) {
+            this.p1Rocket.isFiring = true;
+            this.p1Rocket.sfxRocket.play();
+        }
+    }
 }
