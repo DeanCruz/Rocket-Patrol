@@ -10,11 +10,24 @@ class Spaceship extends Phaser.GameObjects.Sprite{
     }
 
     update() {
+        // increase speed if speedIncrease flag is true
+        if (this.scene.speedIncrease) {
+            this.increaseSpeed();
+        }
         // move spaceship left
         this.x -= this.moveSpeed;
         // wrap around from left edge to right edge
         if(this.x <= 0 - this.width) {
             this.reset();
+        }
+    }
+    
+    increaseSpeed() {
+        if (game.settings.spaceshipSpeed == 3){
+            this.moveSpeed = 5;
+        }
+        if (game.settings.spaceshipSpeed == 4){
+            this.moveSpeed =7;
         }
     }
 
