@@ -63,15 +63,6 @@ class Play extends Phaser.Scene {
 
         // end screen text
         this.endScreenText = [];
-
-        // add space key input event
-        if (this.gameOver)
-        {
-            this.input.keyboard.on('keydown-SPACE', () => {
-                this.hideEndScreen();
-                this.resetGame();
-            });
-        }
         
         // timer
         this.remainingTime = this.settings.gameTimer / 1000;
@@ -122,8 +113,13 @@ class Play extends Phaser.Scene {
         keySPACE = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
         // add mouse controls
-        this.input.on('pointermove', this.handlePointerMove, this);
-        this.input.on('pointerdown', this.handlePointerDown, this);
+        if (this.activePlayer === 'P1') {
+            this.input.on('pointermove', this.handlePointerMove, this);
+            this.input.on('pointerdown', this.handlePointerDown, this);
+        } else { // add mouse controls for p2
+            this.input.on('pointermove', this.handlePointerMoveP2, this);
+            this.input.on('pointerdown', this.handlePointerDown, this);
+        }
         
         // animation config
         this.anims.create({
@@ -212,31 +208,6 @@ class Play extends Phaser.Scene {
     }
 
     update() {
-        // check key input for restart / menu
-        if(this.gameOver && Phaser.Input.Keyboard.JustDown(keyR)) {
-            this.scene.restart();
-        }
-        if(this.gameOver && Phaser.Input.Keyboard.JustDown(keyLEFT)) {
-            this.scene.start("menuScene");
-        }
-
-        // check for space key input to alternate players
-        if (this.gameOver && Phaser.Input.Keyboard.JustDown(keySPACE)) {
-            this.toggleActivePlayer(); // switch from p1 to p2
-            this.gameOver = false;
-            this.remainingTime = this.settings.gameTimer / 1000;
-            this.timeText.setText('Time: ' + this.remainingTime);
-            this.p1Rocket.reset();
-        } 
-        // if p2 and space is not pressed, switch back to p1
-        else if (this.gameOver && this.activePlayer == 'P2'){
-            this.toggleActivePlayer(); // switch from p2 to p1
-            this.gameOver = false;
-            this.remainingTime = this.settings.gameTimer / 1000;
-            this.timeText.setText('Time: ' + this.remainingTime);
-            this.p2Rocket.reset();
-        }
-
         // update tile sprite
         this.starfield.tilePositionX -= 4;  
 
@@ -264,7 +235,7 @@ class Play extends Phaser.Scene {
         }
 
         // 'FIRE' text
-        if (this.p1Rocket.isFiring) {
+        if (this.p1Rocket.isFiring || this.p2Rocket.isFiring) {
             this.fireText.visible = true;
         } 
         else {
@@ -298,46 +269,6 @@ class Play extends Phaser.Scene {
             rocket.reset();
             this.shipExplode(this.smolShip);
         }
-    }
-    
-    endGame() {
-        // display text
-        let scoreConfig = {
-            fontFamily: 'Courier',
-            fontSize: '28px',
-            backgroundColor: '#F3B141',
-            color: '#843605',
-            align: 'right',
-            padding: {
-                top: 5,
-                bottom: 5,
-            },
-            fixedWidth: 0
-        };
-        this.speedTimer = 0;
-        // end screen text
-        this.gameOverText = this.add.text(game.config.width / 2, game.config.height / 2 - 64, 'GAME OVER', scoreConfig).setOrigin(0.5);
-        this.restartText = this.add.text(game.config.width / 2, game.config.height / 2, 'Press (R) to Restart or ← to Menu', scoreConfig).setOrigin(0.5);
-        // space to start end screen
-        this.spaceToStartText = this.add.text(game.config.width / 2, game.config.height / 2 + 64, 'Press SPACE to Start Next Player', scoreConfig).setOrigin(0.5);
-
-        // flag game over condition
-        this.gameOver = true;
-    
-        // store end screen text objects in the array
-        this.endScreenText.push(this.gameOverText);
-        this.endScreenText.push(this.restartText);
-        this.endScreenText.push(this.spaceToStartText);
-
-        // add space key input event to hide end screen text
-        this.input.keyboard.on('keydown-SPACE', () => {
-            this.resetGame();
-            this.endScreenText.forEach(text => {
-                if (text) {
-                    text.visible = false;
-                }
-            });
-        });
     }
 
     checkCollision(rocket, ship) {
@@ -379,35 +310,102 @@ class Play extends Phaser.Scene {
 
     handlePointerMove(pointer) {
         // move with mouse
-        if (!this.p1Rocket.isFiring){
-            this.p1Rocket.x = Phaser.Math.Clamp(pointer.x, borderUISize + borderPadding, game.config.width - borderUISize - borderPadding);
+        if (this.activePlayer === 'P1') {
+            if (!this.p1Rocket.isFiring) {
+                this.p1Rocket.x = Phaser.Math.Clamp(pointer.x, borderUISize + borderPadding, game.config.width - borderUISize - borderPadding);
+            }
+        } else {
+            if (!this.p2Rocket.isFiring) {
+                this.p2Rocket.x = Phaser.Math.Clamp(pointer.x, borderUISize + borderPadding, game.config.width - borderUISize - borderPadding);
+            }
         }
     }
     
     handlePointerDown(pointer) {
-        // fire rocket with mouse
-        if (!this.gameOver && !this.p1Rocket.isFiring) {
-            this.p1Rocket.isFiring = true;
-            this.p1Rocket.sfxRocket.play();
+        if (this.activePlayer === 'P1') {
+            if (!this.p1Rocket.isFiring) {
+                this.p1Rocket.isFiring = true;
+                this.p1Rocket.sfx.play();
+            }
+        } else {
+            if (!this.p2Rocket.isFiring) {
+                this.p2Rocket.isFiring = true;
+                this.p2Rocket.sfx.play();
+            }
         }
     }
 
-    toggleActivePlayer() {
-        // switch active player
-        this.activePlayer = this.activePlayer === 'P1' ? 'P2' : 'P1';
-        this.playerIndicator.setText(this.activePlayer);
-        // update the indicator color based on the active player
-        if (this.activePlayer === 'P1') {
-            this.playerIndicator.setStyle({
-                color: '#FFFFFF',
-                backgroundColor: '#FF0000'
-            });
-        } else {
-            this.playerIndicator.setStyle({
-                color: '#FFFFFF',
-                backgroundColor: '#0066FF'
-            });
-        }
+    endGame() {
+        // display text
+        let scoreConfig = {
+            fontFamily: 'Courier',
+            fontSize: '28px',
+            backgroundColor: '#F3B141',
+            color: '#843605',
+            align: 'right',
+            padding: {
+                top: 5,
+                bottom: 5,
+            },
+            fixedWidth: 0
+        };
+        this.speedTimer = 0;
+        // end screen text
+        this.gameOverText = this.add.text(game.config.width / 2, game.config.height / 2 - 64, 'GAME OVER', scoreConfig).setOrigin(0.5);
+        this.restartText = this.add.text(game.config.width / 2, game.config.height / 2, 'Press (R) to Restart or ← to Menu', scoreConfig).setOrigin(0.5);
+        // space to start end screen
+        this.spaceToStartText = this.add.text(game.config.width / 2, game.config.height / 2 + 64, 'Press SPACE to Start Next Player', scoreConfig).setOrigin(0.5);
+
+        // flag game over condition
+        this.gameOver = true;
+    
+        // store end screen text objects in the array
+        this.endScreenText.push(this.gameOverText);
+        this.endScreenText.push(this.restartText);
+        this.endScreenText.push(this.spaceToStartText);
+
+        // add space key input event to hide end screen text
+        this.spaceKeydown = () => {
+            if (this.gameOver == true) {
+                this.toggleActivePlayer(); // switch from p1 to p2
+                this.resetGame();
+                this.endScreenText.forEach(text => {
+                    if (text) {
+                        text.visible = false;
+                    }
+                });
+                this.input.keyboard.removeListener('keydown-SPACE', this.spaceKeydown);
+            }
+        };
+        this.input.keyboard.on('keydown-SPACE', this.spaceKeydown);
+        // check key input for restart / menu
+        this.rKeydown = () => {
+            if (this.gameOver) {
+                if (this.activePlayer == 'P2') {
+                    this.toggleActivePlayer();
+                }
+                this.resetGame();
+                this.endScreenText.forEach(text => {
+                    if (text) {
+                        text.visible = false;
+                    }
+                });
+                this.input.keyboard.removeListener('keydown-R', this.rKeydown);
+            }
+        };
+        this.input.keyboard.on('keydown-R', this.rKeydown);
+        this.leftKeydown = () => {
+            if (this.gameOver) {
+                if (this.activePlayer == 'P2'){
+                    this.toggleActivePlayer();
+                }
+                this.music.stop();
+                this.scene.start("menuScene");
+                this.resetGame();
+                this.input.keyboard.removeListener('keydown-LEFT', this.leftKeydown);
+            }
+        };
+        this.input.keyboard.on('keydown-LEFT', this.leftKeydown);
     }
 
     resetGame() {
@@ -430,9 +428,28 @@ class Play extends Phaser.Scene {
         this.ship02.reset();
         this.ship03.reset();
         this.smolShip.reset();
+
+        this.gameOver = false;
     }
     hideEndScreen() {
         // hide text after restarting game
         this.endScreenText.forEach(text => text.visible = false);
+    }
+    toggleActivePlayer() {
+        // switch active player
+        this.activePlayer = this.activePlayer === 'P1' ? 'P2' : 'P1';
+        this.playerIndicator.setText(this.activePlayer);
+        // update the indicator color based on the active player
+        if (this.activePlayer === 'P1') {
+            this.playerIndicator.setStyle({
+                color: '#FFFFFF',
+                backgroundColor: '#FF0000'
+            });
+        } else {
+            this.playerIndicator.setStyle({
+                color: '#FFFFFF',
+                backgroundColor: '#0066FF'
+            });
+        }
     }
 }

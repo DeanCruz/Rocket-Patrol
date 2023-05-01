@@ -8,6 +8,7 @@
 // Mod 6: Background Music (5 points) - 10 mins
 // Mod 7: Persistent high score (5 points) - 15 mins
 // Mod 8: Add mouse controls (15 points) - 20 mins
+// Mod 9: Add alternating players (15 points) - 2 hours
 const gameData = {
     highScore: 0
 };
