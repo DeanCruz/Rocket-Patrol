@@ -4,7 +4,13 @@ class Play extends Phaser.Scene {
 
         // Add text to display time
         this.timeText = null;
+
+        // Add timer for speed up
         this.speedTimer = 0;
+
+        // Add music
+        this.music = null;
+
     }
 
     // initialize game settings
@@ -21,9 +27,15 @@ class Play extends Phaser.Scene {
         this.load.image('smallShip', './assets/smallShip.png');
         // load spritesheet
         this.load.spritesheet('explosion', './assets/explosion.png', {frameWidth: 64, frameHeight: 32, startFrame: 0, endFrame: 9});
+         // load music
+         this.load.audio('backgroundMusic', ['./assets/rocketpatrolbackground.mp3']);
     }
 
     create() {
+        // create music
+        this.music = this.sound.add('backgroundMusic');
+        this.music.setVolume(0.5);
+        this.music.play();
         // place tile sprite
         this.starfield = this.add.tileSprite(0, 0, 640, 480, 'starfield').setOrigin(0,0);
         // green UI background
